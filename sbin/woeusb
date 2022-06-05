@@ -1996,7 +1996,9 @@ trap_errexit(){
         "${BASH_COMMAND}" \
         "${?}"
 
-    return 0
+    if [ "${force_unmount}" && "${BASH_COMMAND}" = "umount -q \"\$\{target_device\}\"\*" ] then 
+        return 0
+    fi
 }
 
 trap_exit(){
