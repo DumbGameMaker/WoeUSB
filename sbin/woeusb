@@ -1148,7 +1148,7 @@ check_source_and_target_not_busy(){
                 "$(gettext 'Target device is currently busy, unmount all mounted partitions in target device then try again\n')"
                 exit 1
             fi
-            umount -q "${target_device}"*
+            umount `mount | grep -Po --color=never "${target_device}."`
         fi
     fi
 }
@@ -1996,9 +1996,7 @@ trap_errexit(){
         "${BASH_COMMAND}" \
         "${?}"
 
-    if [ "${force_unmount}" ] && [ "${BASH_COMMAND}" == "umount -q \"\$\{target_device\}\"\*" ]; then 
-        return 0
-    fi
+   return 0
 }
 
 trap_exit(){
