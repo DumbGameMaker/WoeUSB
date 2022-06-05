@@ -53,6 +53,8 @@ init(){
     local target_partition
 
     local workaround_bios_boot_flag=false
+    
+    local force_unmount=false 
 
     local \
         target_filesystem_type=FS_FAT \
@@ -592,6 +594,18 @@ print_help(){
         "$(gettext "Specify the filesystem to use as the target partition's filesystem.")"
     print_markdown_paragraph \
         "$(gettext 'Currently supported: FAT(default)/NTFS')"
+        
+        
+    # The backtick pairs are Markdown's <code> markup, not a shell
+    # command substitution
+    # shellcheck disable=SC2016
+    print_markdown_heading \
+        '`--force-unmount`, `-f`' \
+        3 \
+        atx
+    print_markdown_paragraph \
+        "$(gettext 'Automatically unmounts disks before modifying. Can be dangerous.')"
+    
 
     # The backtick pairs are Markdown's <code> markup, not a shell
     # command substitution
@@ -669,6 +683,10 @@ process_commandline_parameters(){
                 ;;
             --debug)
                 enable_debug=true
+                ;;
+            --force-unmount \
+            |-f)
+                force_unmount=true
                 ;;
             --partition \
             |-p)
@@ -816,7 +834,8 @@ process_commandline_parameters(){
             ;;
         esac
     fi
-
+    
+    
     if [ "${flag_verbose}" = true ] && [ "${enable_debug}" != true ]; then
         trap 'trap_return "${FUNCNAME[0]}"' RETURN
     fi
@@ -1098,7 +1117,7 @@ check_source_and_target_not_busy(){
     local source_media="${1}"; shift
     local target_device="${1}"; shift
     local target_partition="${1}"; shift
-
+    
     if [ "$(mount \
             | grep \
             --count \
@@ -1117,15 +1136,19 @@ check_source_and_target_not_busy(){
                 --fixed-strings \
                 "${target_partition}"
             )" != 0 ]; then
-            print_error \
+            if [ "${force_unmount}" != true ]; then print_error \
                 "$(gettext 'Target partition is currently mounted, unmount the partition then try again\n')"
-            exit 1
+                exit 1
+            fi
+            umount "${target_partition}"
         fi
     else # When install_mode = device, all target partitions needs to by unmounted
         if is_target_busy "${target_device}"; then
-            print_error \
+            if [ "${force_unmount}" != true ]; then print_error \
                 "$(gettext 'Target device is currently busy, unmount all mounted partitions in target device then try again\n')"
-            exit 1
+                exit 1
+            fi
+            umount "${target_device}"*
         fi
     fi
 }
