@@ -1140,7 +1140,7 @@ check_source_and_target_not_busy(){
                 "$(gettext 'Target partition is currently mounted, unmount the partition then try again\n')"
                 exit 1
             fi
-            umount "${target_partition}"
+            umount -q "${target_partition}"
         fi
     else # When install_mode = device, all target partitions needs to by unmounted
         if is_target_busy "${target_device}"; then
@@ -1148,7 +1148,7 @@ check_source_and_target_not_busy(){
                 "$(gettext 'Target device is currently busy, unmount all mounted partitions in target device then try again\n')"
                 exit 1
             fi
-            umount "${target_device}"*
+            umount -q "${target_device}"*
         fi
     fi
 }
